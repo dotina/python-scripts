@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Upload Downtime Reasons</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        
+        .card h2 {
+            margin-top: 0;
+            color: #34495e;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        select, input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        select:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        select[multiple] {
+            height: 120px;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #219a52;
+        }
+        
+        .btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        .error-box {
+            background: #fee;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .success-box {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .info-box {
+            background: #e7f3ff;
+            border: 1px solid #b8daff;
+            color: #004085;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Asset list with search */
+        .asset-container {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .asset-header {
+            background: #f8f9fa;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .asset-search {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .asset-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .asset-controls label {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        
+        .asset-controls input[type="checkbox"] {
+            margin-right: 6px;
+        }
+        
+        .asset-count {
+            font-size: 13px;
+            color: #666;
+            margin-left: auto;
+        }
+        
+        .asset-list {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .asset-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 10px;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            transition: background 0.15s;
+        }
+        
+        .asset-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .asset-item input[type="checkbox"] {
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .asset-item .asset-name {
+            flex: 1;
+        }
+        
+        .asset-item .asset-section {
+            font-size: 12px;
+            color: #888;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        .asset-item.hidden {
+            display: none;
+        }
+        
+        /* Preview table */
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        
+        .preview-table th, .preview-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .preview-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .preview-table tr:hover td {
+            background: #f8f9fa;
+        }
+        
+        /* Reasons preview */
+        .reasons-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+        }
+        
+        .reason-tag {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 4px 10px;
+            border-radius: 4px;
+            margin: 3px;
+            font-size: 13px;
+        }
+        
+        /* Loading spinner */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Sections multi-select */
+        .sections-container {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .sections-header {
+            background: #f8f9fa;
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .sections-list {
+            max-height: 150px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .section-item {
+            display: flex;
+            align-items: center;
+            padding: 6px 8px;
+            border-radius: 4px;
+            margin-bottom: 2px;
+        }
+        
+        .section-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .section-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📤 Bulk Upload Downtime Reasons</h1>
+        
+        <!-- Error/Success Messages -->
+        <div id="errorBox" class="error-box"></div>
+        <div id="successBox" class="success-box"></div>
+        
+        <!-- Step 1: File Upload -->
+        <div class="card">
+            <h2>Step 1: Upload File</h2>
+            <div class="form-group">
+                <label for="fileInput">Select Excel (.xlsx) or CSV (.csv) file</label>
+                <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+            </div>
+            <button class="btn btn-primary" id="parseBtn" onclick="parseFile()">
+                Parse File
+            </button>
+        </div>
+        
+        <!-- Step 2: Column Selection (shown after file parsed) -->
+        <div class="card hidden" id="columnCard">
+            <h2>Step 2: Select Reason Column</h2>
+            <div class="info-box">
+                File parsed successfully. Preview of first 5 rows shown below. Select the column containing reason names.
+            </div>
+            
+            <div class="form-group">
+                <label for="columnSelect">Select column with reason names</label>
+                <select id="columnSelect" onchange="updateReasonPreview()">
+                    <option value="">-- Select Column --</option>
+                </select>
+            </div>
+            
+            <!-- File Preview Table -->
+            <div style="overflow-x: auto; margin-bottom: 20px;">
+                <table class="preview-table" id="previewTable">
+                    <thead id="previewHead"></thead>
+                    <tbody id="previewBody"></tbody>
+                </table>
+            </div>
+            
+            <!-- Extracted Reasons -->
+            <div id="reasonsPreview" class="hidden">
+                <label>Extracted Reasons (<span id="reasonCount">0</span> unique):</label>
+                <div class="reasons-list" id="reasonsList"></div>
+            </div>
+        </div>
+        
+        <!-- Step 3: Company & Asset Selection -->
+        <div class="card hidden" id="selectionCard">
+            <h2>Step 3: Select Company & Assets</h2>
+            
+            <div class="grid-2">
+                <!-- Company Selection -->
+                <div class="form-group">
+                    <label for="companySelect">Company</label>
+                    <select id="companySelect" onchange="onCompanyChange()">
+                        <option value="">-- Select Company --</option>
+                    </select>
+                </div>
+                
+                <!-- Sections Multi-Select -->
+                <div class="form-group">
+                    <label>Sections (optional filter)</label>
+                    <div class="sections-container">
+                        <div class="sections-header">
+                            <label style="margin-bottom: 0; cursor: pointer;">
+                                <input type="checkbox" id="selectAllSections" onchange="toggleAllSections()">
+                                Select All Sections
+                            </label>
+                        </div>
+                        <div class="sections-list" id="sectionsList">
+                            <p style="color: #888; margin: 0;">Select a company first</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Assets Selection -->
+            <div class="form-group">
+                <label>Assets</label>
+                <div class="asset-container">
+                    <div class="asset-header">
+                        <input type="text" class="asset-search" id="assetSearch" 
+                               placeholder="Search assets..." oninput="filterAssets()">
+                        <div class="asset-controls">
+                            <label>
+                                <input type="checkbox" id="selectAllAssets" onchange="toggleAllAssets()">
+                                Select All (Filtered)
+                            </label>
+                            <span class="asset-count" id="assetCount">0 of 0 selected</span>
+                        </div>
+                    </div>
+                    <div class="asset-list" id="assetList">
+                        <p style="color: #888; margin: 10px;">Select a company first</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Step 4: Submit -->
+        <div class="card hidden" id="submitCard">
+            <h2>Step 4: Review & Submit</h2>
+            
+            <div class="info-box" id="summaryBox">
+                Ready to upload <strong><span id="summaryReasons">0</span></strong> reasons 
+                to <strong><span id="summaryAssets">0</span></strong> assets 
+                (<strong><span id="summaryTotal">0</span></strong> total records)
+            </div>
+            
+            <button class="btn btn-success" id="submitBtn" onclick="submitUpload()" disabled>
+                Upload Reasons
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Global state
+        let parsedData = null;
+        let selectedReasons = [];
+        let allAssets = [];
+        
+        // Show/hide error message
+        function showError(message) {
+            const box = document.getElementById('errorBox');
+            box.textContent = message;
+            box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; }, 10000);
+        }
+        
+        function showSuccess(message) {
+            const box = document.getElementById('successBox');
+            box.textContent = message;
+            box.style.display = 'block';
+            setTimeout(() => { box.style.display = 'none'; }, 10000);
+        }
+        
+        function hideMessages() {
+            document.getElementById('errorBox').style.display = 'none';
+            document.getElementById('successBox').style.display = 'none';
+        }
+        
+        // Parse uploaded file
+        async function parseFile() {
+            hideMessages();
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                showError('Please select a file first');
+                return;
+            }
+            
+            const btn = document.getElementById('parseBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Parsing...';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/upload/parse', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    showError(result.error);
+                    return;
+                }
+                
+                parsedData = result.data;
+                displayParsedData();
+                loadCompanies();
+                
+                // Show next steps
+                document.getElementById('columnCard').classList.remove('hidden');
+                document.getElementById('selectionCard').classList.remove('hidden');
+                document.getElementById('submitCard').classList.remove('hidden');
+                
+            } catch (err) {
+                showError('Failed to parse file: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Parse File';
+            }
+        }
+        
+        // Display parsed file data
+        function displayParsedData() {
+            const columns = parsedData.columns;
+            const rows = parsedData.preview_rows;
+            
+            // Populate column selector
+            const select = document.getElementById('columnSelect');
+            select.innerHTML = '<option value="">-- Select Column --</option>';
+            columns.forEach(col => {
+                const opt = document.createElement('option');
+                opt.value = col;
+                opt.textContent = col;
+                select.appendChild(opt);
+            });
+            
+            // Auto-select first column
+            if (columns.length > 0) {
+                select.value = columns[0];
+            }
+            
+            // Build preview table header
+            const thead = document.getElementById('previewHead');
+            thead.innerHTML = '<tr>' + columns.map(c => `<th>${escapeHtml(c)}</th>`).join('') + '</tr>';
+            
+            // Build preview table body
+            const tbody = document.getElementById('previewBody');
+            tbody.innerHTML = rows.map(row => 
+                '<tr>' + row.map(cell => `<td>${escapeHtml(cell)}</td>`).join('') + '</tr>'
+            ).join('');
+            
+            updateReasonPreview();
+        }
+        
+        // Update reason preview when column changes
+        function updateReasonPreview() {
+            const column = document.getElementById('columnSelect').value;
+            const previewDiv = document.getElementById('reasonsPreview');
+            const listDiv = document.getElementById('reasonsList');
+            const countSpan = document.getElementById('reasonCount');
+            
+            if (!column || !parsedData) {
+                previewDiv.classList.add('hidden');
+                selectedReasons = [];
+                updateSummary();
+                return;
+            }
+            
+            const reasons = parsedData.column_data[column] || [];
+            selectedReasons = reasons;
+            
+            listDiv.innerHTML = reasons.map(r => 
+                `<span class="reason-tag">${escapeHtml(r)}</span>`
+            ).join('');
+            
+            countSpan.textContent = reasons.length;
+            previewDiv.classList.remove('hidden');
+            
+            updateSummary();
+        }
+        
+        // Load companies
+        async function loadCompanies() {
+            try {
+                const response = await fetch('/api/companies');
+                const result = await response.json();
+                
+                if (!result.success) {
+                    showError('Failed to load companies: ' + result.error);
+                    return;
+                }
+                
+                const select = document.getElementById('companySelect');
+                select.innerHTML = '<option value="">-- Select Company --</option>';
+                
+                result.data.forEach(company => {
+                    const opt = document.createElement('option');
+                    opt.value = company.id;
+                    opt.textContent = `${company.name} (${company.industry})`;
+                    select.appendChild(opt);
+                });
+                
+            } catch (err) {
+                showError('Failed to load companies: ' + err.message);
+            }
+        }
+        
+        // Handle company change
+        async function onCompanyChange() {
+            const companyId = document.getElementById('companySelect').value;
+            
+            // Reset sections and assets
+            document.getElementById('sectionsList').innerHTML = '<p style="color: #888; margin: 0;">Loading...</p>';
+            document.getElementById('assetList').innerHTML = '<p style="color: #888; margin: 10px;">Loading...</p>';
+            document.getElementById('selectAllSections').checked = false;
+            document.getElementById('selectAllAssets').checked = false;
+            allAssets = [];
+            
+            if (!companyId) {
+                document.getElementById('sectionsList').innerHTML = '<p style="color: #888; margin: 0;">Select a company first</p>';
+                document.getElementById('assetList').innerHTML = '<p style="color: #888; margin: 10px;">Select a company first</p>';
+                updateAssetCount();
+                updateSummary();
+                return;
+            }
+            
+            // Load sections
+            await loadSections(companyId);
+            
+            // Load all assets for company
+            await loadAssets(companyId);
+        }
+        
+        // Load sections for company
+        async function loadSections(companyId) {
+            try {
+                const response = await fetch(`/api/sections?company_id=${companyId}`);
+                const result = await response.json();
+                
+                if (!result.success) {
+                    showError('Failed to load sections: ' + result.error);
+                    return;
+                }
+                
+                const listDiv = document.getElementById('sectionsList');
+                
+                if (result.data.length === 0) {
+                    listDiv.innerHTML = '<p style="color: #888; margin: 0;">No sections found</p>';
+                    return;
+                }
+                
+                listDiv.innerHTML = result.data.map(section => `
+                    <div class="section-item">
+                        <input type="checkbox" id="section_${section.id}" value="${section.id}" 
+                               onchange="onSectionChange()">
+                        <label for="section_${section.id}" style="margin-bottom: 0; cursor: pointer;">
+                            ${escapeHtml(section.name)}
+                        </label>
+                    </div>
+                `).join('');
+                
+            } catch (err) {
+                showError('Failed to load sections: ' + err.message);
+            }
+        }
+        
+        // Handle section change
+        async function onSectionChange() {
+            const companyId = document.getElementById('companySelect').value;
+            if (!companyId) return;
+            
+            // Update "Select All" checkbox state
+            const sectionCheckboxes = document.querySelectorAll('#sectionsList input[type="checkbox"]');
+            const allChecked = Array.from(sectionCheckboxes).every(cb => cb.checked);
+            document.getElementById('selectAllSections').checked = allChecked;
+            
+            await loadAssets(companyId);
+        }
+        
+        // Toggle all sections
+        async function toggleAllSections() {
+            const checked = document.getElementById('selectAllSections').checked;
+            const checkboxes = document.querySelectorAll('#sectionsList input[type="checkbox"]');
+            checkboxes.forEach(cb => cb.checked = checked);
+            
+            const companyId = document.getElementById('companySelect').value;
+            if (companyId) {
+                await loadAssets(companyId);
+            }
+        }
+        
+        // Load assets
+        async function loadAssets(companyId) {
+            // Get selected sections
+            const sectionCheckboxes = document.querySelectorAll('#sectionsList input[type="checkbox"]:checked');
+            const sectionIds = Array.from(sectionCheckboxes).map(cb => cb.value);
+            
+            let url = `/api/assets?company_id=${companyId}`;
+            if (sectionIds.length > 0) {
+                url += `&section_ids=${sectionIds.join(',')}`;
+            }
+            
+            try {
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (!result.success) {
+                    showError('Failed to load assets: ' + result.error);
+                    return;
+                }
+                
+                allAssets = result.data;
+                renderAssetList();
+                
+            } catch (err) {
+                showError('Failed to load assets: ' + err.message);
+            }
+        }
+        
+        // Render asset list
+        function renderAssetList() {
+            const listDiv = document.getElementById('assetList');
+            
+            if (allAssets.length === 0) {
+                listDiv.innerHTML = '<p style="color: #888; margin: 10px;">No assets found</p>';
+                updateAssetCount();
+                updateSummary();
+                return;
+            }
+            
+            listDiv.innerHTML = allAssets.map(asset => `
+                <div class="asset-item" data-name="${escapeAttr(asset.name.toLowerCase())}">
+                    <input type="checkbox" id="asset_${asset.id}" value="${asset.id}" 
+                           onchange="onAssetChange()">
+                    <span class="asset-name">${escapeHtml(asset.name)}</span>
+                    <span class="asset-section">${escapeHtml(asset.section_name)}</span>
+                </div>
+            `).join('');
+            
+            // Clear search
+            document.getElementById('assetSearch').value = '';
+            document.getElementById('selectAllAssets').checked = false;
+            
+            updateAssetCount();
+            updateSummary();
+        }
+        
+        // Filter assets by search
+        function filterAssets() {
+            const search = document.getElementById('assetSearch').value.toLowerCase().trim();
+            const items = document.querySelectorAll('.asset-item');
+            
+            items.forEach(item => {
+                const name = item.getAttribute('data-name');
+                if (!search || name.includes(search)) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+            
+            updateSelectAllState();
+        }
+        
+        // Toggle all visible assets
+        function toggleAllAssets() {
+            const checked = document.getElementById('selectAllAssets').checked;
+            const visibleItems = document.querySelectorAll('.asset-item:not(.hidden) input[type="checkbox"]');
+            visibleItems.forEach(cb => cb.checked = checked);
+            updateAssetCount();
+            updateSummary();
+        }
+        
+        // Handle individual asset change
+        function onAssetChange() {
+            updateSelectAllState();
+            updateAssetCount();
+            updateSummary();
+        }
+        
+        // Update "Select All" checkbox state
+        function updateSelectAllState() {
+            const visibleCheckboxes = document.querySelectorAll('.asset-item:not(.hidden) input[type="checkbox"]');
+            const allChecked = visibleCheckboxes.length > 0 && 
+                               Array.from(visibleCheckboxes).every(cb => cb.checked);
+            document.getElementById('selectAllAssets').checked = allChecked;
+        }
+        
+        // Update asset count display
+        function updateAssetCount() {
+            const total = document.querySelectorAll('.asset-item input[type="checkbox"]').length;
+            const selected = document.querySelectorAll('.asset-item input[type="checkbox"]:checked').length;
+            document.getElementById('assetCount').textContent = `${selected} of ${total} selected`;
+        }
+        
+        // Get selected asset IDs
+        function getSelectedAssetIds() {
+            const checkboxes = document.querySelectorAll('.asset-item input[type="checkbox"]:checked');
+            return Array.from(checkboxes).map(cb => parseInt(cb.value));
+        }
+        
+        // Update summary
+        function updateSummary() {
+            const reasons = selectedReasons.length;
+            const assets = getSelectedAssetIds().length;
+            const total = reasons * assets;
+            
+            document.getElementById('summaryReasons').textContent = reasons;
+            document.getElementById('summaryAssets').textContent = assets;
+            document.getElementById('summaryTotal').textContent = total;
+            
+            // Enable/disable submit button
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = reasons === 0 || assets === 0;
+        }
+        
+        // Submit upload
+        async function submitUpload() {
+            hideMessages();
+            
+            const assetIds = getSelectedAssetIds();
+            
+            // Validation
+            if (selectedReasons.length === 0) {
+                showError('No reason names found. Please select a valid column.');
+                return;
+            }
+            
+            if (assetIds.length === 0) {
+                showError('Please select at least one asset.');
+                return;
+            }
+            
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span>Uploading...';
+            
+            try {
+                const response = await fetch('/api/upload/process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        reason_names: selectedReasons,
+                        asset_ids: assetIds
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!result.success) {
+                    showError(result.error);
+                    return;
+                }
+                
+                const data = result.data;
+                showSuccess(
+                    `Upload successful! Inserted ${data.inserted} new records, ` +
+                    `updated ${data.updated} existing records. ` +
+                    `Total processed: ${data.total_processed} records.`
+                );
+                
+                // Reset form
+                resetForm();
+                
+            } catch (err) {
+                showError('Upload failed: ' + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Upload Reasons';
+            }
+        }
+        
+        // Reset form
+        function resetForm() {
+            document.getElementById('fileInput').value = '';
+            document.getElementById('columnCard').classList.add('hidden');
+            document.getElementById('selectionCard').classList.add('hidden');
+            document.getElementById('submitCard').classList.add('hidden');
+            document.getElementById('companySelect').value = '';
+            document.getElementById('sectionsList').innerHTML = '<p style="color: #888; margin: 0;">Select a company first</p>';
+            document.getElementById('assetList').innerHTML = '<p style="color: #888; margin: 10px;">Select a company first</p>';
+            parsedData = null;
+            selectedReasons = [];
+            allAssets = [];
+        }
+        
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function escapeAttr(text) {
+            return text.replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>
